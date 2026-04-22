@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Random Walk → Browniano → GBM</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body { font-family: Arial; text-align: center; }
+    canvas { margin-top: 20px; }
+  </style>
+</head>
+
+<body>
+
+<h2>Random Walk → Moto Browniano → GBM</h2>
+
+<label>n (numero passi): </label>
+<input type="number" id="nInput" placeholder="Inserisci n">
+
+<br><br>
+
+<label>Processo:</label>
+<select id="process">
+  <option value="rw">Random Walk scalata</option>
+  <option value="bm">Moto Browniano (ABM)</option>
+  <option value="gbm">Geometric Brownian Motion (GBM)</option>
+</select>
+
+<br><br>
+
+<button id="btn">Simula</button>
+
+<canvas id="chart" width="800" height="400"></canvas>
+
+<script>
+let chart = null;
+
+function rademacher() {
+  return Math.random() < 0.5 ? -1 : 1;
+}
+
+function simulate() {
+
+  let n = parseInt(document.getElementById("nInput").value);
+
+  if (!n || n <= 0) {
+    alert("Inserisci un numero valido!");
+    return;
+  }
+
+  let S = 0;
+  let W = [];   // traiettoria Browniana
+  let data = [];
+  let labels = [];
+
+  // 🔹 Generazione Random Walk scalata → Browniano
+  for (let k = 0; k <= n; k++) {
+    if (k > 0) S += rademacher();
+
+    let Bt = S / Math.sqrt(n);
+    W.push(Bt);
+    labels.push(k);
+  }
+
+  // 🔹 Parametri GBM
+  let mu = 0.05;
+  let sigma = 0.2;
+  let S0 = 100;
+
+  let process = document.getElementById("process").value;
+
+  // 🔹 Costruzione dati finali
+  for (let k = 0; k <= n; k++) {
+
+    let t = k / n;
+
+    if (process === "rw") {
+      data.push(W[k]);
+    }
+
+    else if (process === "bm") {
+      data.push(W[k]);
+    }
+
+    else if (process === "gbm") {
+      let St = S0 * Math.exp((mu - 0.5 * sigma * sigma) * t + sigma * W[k]);
+      data.push(St);
+    }
+  }
+
+  // 🔹 Label dinamica
+  let labelName = "";
+
+  if (process === "rw") labelName = "Random Walk scalata";
+  if (process === "bm") labelName = "Moto Browniano (ABM)";
+  if (process === "gbm") labelName = "Geometric Brownian Motion (GBM)";
+
+  const canvas = document.getElementById("chart");
+
+  canvas.width = 800;
+  canvas.height = 400;
+
+  if (chart) chart.destroy();
+
+  chart = new Chart(canvas, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: labelName,
+        data: data,
+        borderWidth: 1,
+        fill: false
+      }]
+    },
+    options: {
+      responsive: false,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          title: { display: true, text: "Tempo (k)" }
+        },
+        y: {
+          title: { display: true, text: "Valore processo" }
+        }
+      }
+    }
+  });
+}
+
+// bottone
+document.getElementById("btn").addEventListener("click", simulate);
+
+</script>
+
+</body>
+</html>
